@@ -1,48 +1,76 @@
-# indexador-demo/backend/services/meilisearch_service.py
-
+# backend/services/meilisearch_service.py
+from typing import List, Dict
 from meilisearch import Client
-from config import settings # Asumiendo que las configuraciones están accesibles
+from config import settings
 
-meilisearch_client: Client = None
+client: Client | None = None
+INDEX_NAME = "documents"
 
-def initialize_meilisearch():
+# ---------------------------------------------------------------------------
+def initialize_meilisearch() -> None:
     """
-    Inicializa el cliente de Meilisearch.
+    Inicializa el cliente global y crea el índice 'documents' si no existe.
+    Lanza RuntimeError con un mensaje claro cuando:
+        • la URL es incorrecta / servicio caído
+        • la API-key no coincide
     """
-    global meilisearch_client
-    if meilisearch_client is None:
-        try:
-            meilisearch_client = Client(settings.MEILISEARCH_HOST, settings.MEILISEARCH_MASTER_KEY)
-            # Opcional: Intenta obtener la versión para verificar la conexión
-            version = meilisearch_client.get_version()
-            print(f"Meilisearch inicializado exitosamente. Versión: {version['pkgVersion']}")
-        except Exception as e:
-            print(f"Error al inicializar Meilisearch: {e}")
-            raise # Propaga la excepción para que el inicio de la app falle si Meilisearch no está disponible
+    global client
+    if client:
+        return  # ya inicializado
 
-def get_meilisearch_client() -> Client:
-    """
-    Retorna la instancia del cliente de Meilisearch inicializada.
-    """
-    if meilisearch_client is None:
-        raise Exception("Meilisearch client not initialized. Call initialize_meilisearch() first.")
-    return meilisearch_client
+    client = Client(
+        settings.MEILISEARCH_HOST,
+        settings.MEILISEARCH_MASTER_KEY or None
+    )
 
-# Funciones placeholder para futuras implementaciones
-async def add_documents_to_meilisearch(index_name: str, documents: list):
-    """
-    Añade o actualiza documentos en un índice de Meilisearch.
-    """
-    client = get_meilisearch_client()
-    # await client.index(index_name).add_documents(documents) # Implementaremos esto más tarde
-    print(f"Simulando añadir {len(documents)} documentos al índice '{index_name}' en Meilisearch.")
-    pass
+    # --- prueba de conexión / clave ---
+    try:
+        raw = client.get_indexes()            # ↩︎ puede ser list o dict
+    except Exception as exc:
+        raise RuntimeError(f"No se pudo conectar a MeiliSearch: {exc}") from exc
 
-async def search_documents_in_meilisearch(index_name: str, query: str):
-    """
-    Busca documentos en un índice de Meilisearch.
-    """
-    client = get_meilisearch_client()
-    # results = await client.index(index_name).search(query) # Implementaremos esto más tarde
-    print(f"Simulando búsqueda de '{query}' en el índice '{index_name}' en Meilisearch.")
-    return {"hits": [], "query": query} # Retorna un resultado vacío por ahora
+    # raw → lista de índices
+    if isinstance(raw, dict):
+        # ¿vino envuelto en {"results": [...]} ?
+        if "results" in raw:
+            raw = raw["results"]
+        # ¿vino un error {message, code,…}?
+        elif "message" in raw:
+            raise RuntimeError(
+                f"MeiliSearch error: {raw['message']} (code={raw.get('code')})"
+            )
+        else:
+            raise RuntimeError(f"Respuesta inesperada de MeiliSearch: {raw}")
+
+# --- crea índice si no existe ---
+    if isinstance(raw, list):
+        index_uids = [
+            idx["uid"] if isinstance(idx, dict) else idx.uid      # ← aquí
+            for idx in raw
+        ]
+    else:
+        raise RuntimeError(f"Respuesta inesperada de MeiliSearch: {raw}")
+
+    if INDEX_NAME not in index_uids:
+        # Para SDK < 2.0
+        client.create_index(INDEX_NAME, {"primaryKey": "id"})
+
+
+
+    print("MeiliSearch inicializado.")
+
+# ---------------------------------------------------------------------------
+def get_client() -> Client:
+    if client is None:
+        raise RuntimeError("Debe llamarse initialize_meilisearch() primero")
+    return client
+
+# ---------------------------------------------------------------------------
+def add_documents(documents: List[Dict]) -> None:
+    initialize_meilisearch()
+    get_client().index(INDEX_NAME).add_documents(documents)
+    print(f"{len(documents)} documento(s) añadidos a MeiliSearch.")
+
+def search_documents(query: str, limit: int = 20):
+    initialize_meilisearch()
+    return get_client().index(INDEX_NAME).search(query, {"limit": limit})

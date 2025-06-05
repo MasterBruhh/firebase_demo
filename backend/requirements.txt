@@ -6,3 +6,9 @@ firebase-admin    # Para interactuar con Firebase desde Python
 google-generativeai # Para la API de Gemini
 meilisearch       # Para interactuar con Meilisearch
 python-multipart  # Necesario para el manejo de archivos en FastAPI
+
+# Extracción de texto
+pdfplumber
+python-docx
+python-pptx
+openpyxl

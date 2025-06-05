@@ -1,7 +1,8 @@
 import firebase_admin
 from firebase_admin import credentials, auth, firestore, storage
 from config import settings # Importa las configuraciones
-import os
+import os, uuid
+from datetime import datetime
 
 # Inicializar Firebase Admin SDK
 def initialize_firebase():
@@ -34,9 +35,45 @@ def get_auth_client():
     initialize_firebase()
     return auth
 
-def get_storage_client():
+def get_storage_bucket():
     initialize_firebase()
     return storage.bucket()
+
+def _dated_blob_path(filename: str) -> str:
+    """
+    genera documents/yyyy/mm/dd/filename  (cero-paddings)
+    """
+    today = datetime.now()
+    return (
+        f"documents/"
+        f"{today.year:04d}/"
+        f"{today.month:02d}/"
+        f"{today.day:02d}/"
+        f"{filename}"
+    )
+
+def upload_file_to_storage(
+    file_bytes: bytes,
+    filename: str,
+    content_type: str | None = None,
+) -> str:
+    """
+    Sube el archivo y devuelve la ruta interna del blob.
+    """
+    bucket = get_storage_bucket()
+    blob_path = _dated_blob_path(filename)
+    blob = bucket.blob(blob_path)
+    blob.upload_from_string(file_bytes, content_type=content_type)
+    print(f"Archivo '{filename}' subido a Storage → {blob_path}")
+    return blob_path
+
+def download_file_from_storage(blob_path: str) -> bytes:
+    """
+    Descarga un blob de Storage y devuelve el contenido en bytes.
+    """
+    bucket = get_storage_bucket()
+    blob = bucket.blob(blob_path)
+    return blob.download_as_bytes()
 
 # Pequeña función para probar la autenticación
 async def create_admin_user(email: str, password: str):
