@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard] # Servidor ASGI para FastAPI
+python-dotenv     # Para cargar variables de .env
+pydantic          # Para la configuración y modelos de datos
+firebase-admin    # Para interactuar con Firebase desde Python
+google-generativeai # Para la API de Gemini
+meilisearch       # Para interactuar con Meilisearch
+python-multipart  # Necesario para el manejo de archivos en FastAPI
