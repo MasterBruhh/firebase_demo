@@ -9,7 +9,10 @@ const firebaseConfig = {
     apiKey: "AIzaSyAnlMW-lOQg3YmssadJp86apbtnokeu_8s",
     authDomain: "indexador-demo-gemini.firebaseapp.com",
     projectId: "indexador-demo-gemini",
-    storageBucket: "indexador-demo-gemini.firebasestorage.app",
+    // The storage bucket URL must end with 'appspot.com'. The previous
+    // value used the domain `firebasestorage.app`, which prevents the
+    // Firebase SDK from correctly locating the bucket.
+    storageBucket: "indexador-demo-gemini.appspot.com",
     messagingSenderId: "1054037908225",
     appId: "1:1054037908225:web:cf279981cb093e3a19d900"
   };
