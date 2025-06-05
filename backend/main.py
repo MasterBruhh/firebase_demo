@@ -1,3 +1,4 @@
+# backend/main.py
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -6,13 +7,14 @@ import uvicorn
 import asyncio # Necesario para ejecutar operaciones asíncronas
 
 from config import settings
-from services.firebase_service import initialize_firebase, get_firestore_client, get_auth_client
+from services.firebase_service import (
+    initialize_firebase, get_firestore_client, get_auth_client
+)
 from services.meilisearch_service import initialize_meilisearch
-from utils.audit_logger import log_event # Importamos el logger de auditoría
-from routes import auth_routes, document_routes
+from utils.audit_logger import log_event
+from routes import auth_routes, document_routes, audit_routes
 
-# --- Contexto de vida de la aplicación (Startup/Shutdown) ---
-# Usamos asynccontextmanager para manejar la inicialización y limpieza de recursos
+# ---------- Ciclo de vida ----------
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
@@ -85,43 +87,35 @@ async def lifespan(app: FastAPI):
     # Aquí puedes añadir código de limpieza si es necesario (ej. cerrar conexiones a BD)
     pass # No hay nada específico que cerrar para Firebase/Meilisearch clientes aquí
 
-# --- Inicialización de la aplicación FastAPI ---
+# ---------- FastAPI ----------
 app = FastAPI(
     title="Gemini Indexer Demo Backend",
-    description="API para subir, indexar y buscar documentos con Gemini y Meilisearch.",
     version="1.0.0",
-    lifespan=lifespan # Conecta la función lifespan
+    lifespan=lifespan,
+    description="API para subir, indexar y buscar documentos con Gemini y Meilisearch."
 )
 
-# --- Configuración de CORS ---
-# Esto es CRUCIAL para que tu frontend React pueda hacer peticiones a tu backend.
-# En desarrollo, permitimos todo. En producción, especifica tus orígenes.
-origins = [
-    "http://localhost:3000",  # Origen de tu aplicación React en desarrollo
-    "http://localhost:5173",  # Si usas Vite, este es el puerto común
-    # "https://your-frontend-domain.com", # Agrega tu dominio de producción aquí
-]
-
+# ---------- CORS ----------
+origins = ["http://localhost:3000", "http://localhost:5173"]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"], # Permite todos los métodos (GET, POST, PUT, DELETE, etc.)
-    allow_headers=["*"], # Permite todos los headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-# --- Incluir Rutas ---
-# Conectamos los enrutadores definidos en routes/
-app.include_router(auth_routes.router, prefix="/auth", tags=["Authentication"])
+# ---------- Routers ----------
+app.include_router(auth_routes.router,     prefix="/auth",     tags=["Authentication"])
 app.include_router(document_routes.router, prefix="/documents", tags=["Documents"])
+app.include_router(audit_routes.router,    prefix="/audit",    tags=["Audit"])  # ← ¡imprescindible!
 
-# --- Ruta de Prueba ---
+# ---------- Raíz ----------
 @app.get("/")
-async def read_root():
+async def root():
     return {"message": "Bienvenido al backend del Indexador Gemini."}
 
-# --- Manejo de Errores Global (Opcional, pero recomendado) ---
-# Puedes añadir un manejador de excepciones global para errores no capturados
+# ---------- Errores ----------
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception):
     # Log el error (puedes usar un logger más sofisticado aquí)
@@ -133,8 +127,6 @@ async def general_exception_handler(request: Request, exc: Exception):
         content={"message": "Un error inesperado ha ocurrido.", "detail": str(exc)},
     )
 
-
-# --- Ejecutar la aplicación (para desarrollo) ---
 if __name__ == "__main__":
     # uvicorn.run(app, host="0.0.0.0", port=8000)
     # Ejecuta esto para iniciar el servidor de desarrollo
