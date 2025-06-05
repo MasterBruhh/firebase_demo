@@ -25,6 +25,9 @@ export function AuthProvider({ children }) {
     }
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const token = await userCredential.user.getIdToken();
+      setIdToken(token);
+      localStorage.setItem('idToken', token);
       return userCredential;
     } catch (error) {
       throw error;
@@ -38,6 +41,9 @@ export function AuthProvider({ children }) {
     }
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const token = await userCredential.user.getIdToken();
+      setIdToken(token);
+      localStorage.setItem('idToken', token);
       return userCredential;
     } catch (error) {
       throw error;

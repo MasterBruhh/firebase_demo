@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { authAPI } from '../services/api';
 import { Link, useNavigate } from 'react-router-dom';
 
 export default function Signup() {
@@ -29,14 +28,6 @@ export default function Signup() {
       
       // Register with Firebase
       await signup(email, password);
-      
-      // Also register with our backend
-      try {
-        await authAPI.register(email, password);
-      } catch (backendError) {
-        console.warn('Backend registration failed:', backendError.message);
-        // Continue anyway since Firebase registration succeeded
-      }
       
       navigate('/dashboard');
     } catch (error) {
