@@ -11,55 +11,40 @@ export default function Dashboard() {
   const [error,    setError]    = useState("");
   const navigate = useNavigate();
 
-  // ------------------------------------------------------------
-  // Cargar la información del usuario — solo 1 llamada
-  // ------------------------------------------------------------
+  /* ---------- carga información del usuario ---------- */
   useEffect(() => {
     if (!currentUser) return;
 
-    const loadUserInfo = async () => {
+    (async () => {
       try {
         const { data } = await authAPI.getCurrentUser();
         setUserInfo(data);
         setError("");
       } catch (err) {
         setError(err.response?.data?.detail || err.message);
-        console.error("Error loading user info:", err);
       } finally {
         setLoading(false);
       }
-    };
-
-    loadUserInfo();
+    })();
   }, [currentUser]);
 
-  // ------------------------------------------------------------
-  // Logout
-  // ------------------------------------------------------------
+  /* ---------- logout ---------- */
   const handleLogout = async () => {
-    try {
-      await logout();
-      navigate("/login");
-    } catch (error) {
-      console.error("Error during logout:", error);
-      // Even if logout fails, redirect to login
-      navigate("/login");
-    }
+    await logout();
+    navigate("/login");
   };
 
-  // ------------------------------------------------------------
-  // Test admin route
-  // ------------------------------------------------------------
+  /* ---------- prueba ruta admin ---------- */
   const testAdminRoute = async () => {
     try {
-      const response = await authAPI.testAdminRoute();
-      alert(`Admin test successful: ${response.data.message}`);
+      const { data } = await authAPI.testAdminRoute();
+      alert(`Admin test successful: ${data.message}`);
     } catch (err) {
       alert(`Error: ${err.response?.data?.detail || err.message}`);
     }
   };
 
-  if (loading) return <div className="loading">Loading...</div>;
+  if (loading) return <div className="loading">Loading…</div>;
 
   return (
     <div className="dashboard">
@@ -71,16 +56,19 @@ export default function Dashboard() {
       </header>
 
       <div className="dashboard-content">
+        {/* ---------- info usuario ---------- */}
         <div className="user-info">
-          <h2>Welcome, {currentUser?.email}</h2>
-          <p><strong>UID:</strong> {currentUser?.uid}</p>
+          <h2>Welcome, {currentUser.email}</h2>
+          <p><strong>UID:</strong> {currentUser.uid}</p>
           {userInfo && (
-            <p><strong>Role:</strong> {userInfo.is_admin ? 'Admin' : 'User'}</p>
+            <p><strong>Role:</strong> {isAdmin ? "Admin" : "User"}</p>
           )}
           {error && <div className="error-message">{error}</div>}
         </div>
 
+        {/* ---------- acciones ---------- */}
         <div className="dashboard-actions">
+          {/* bloque auth test (visibles a todos) */}
           <div className="action-section">
             <h3>Authentication Test</h3>
             <button onClick={testAdminRoute} className="test-button">
@@ -88,33 +76,40 @@ export default function Dashboard() {
             </button>
           </div>
 
+          {/* gestión de documentos */}
           <div className="action-section">
             <h3>Document Management</h3>
-            <button 
-              onClick={() => navigate("/upload")} 
-              className="action-button"
-            >
-              Upload Document
-            </button>
-            <button 
-              onClick={() => navigate("/search")} 
+
+            {/* Upload solo admins */}
+            {isAdmin && (
+              <button
+                onClick={() => navigate("/upload")}
+                className="action-button"
+              >
+                Upload Document
+              </button>
+            )}
+
+            <button
+              onClick={() => navigate("/search")}
               className="action-button"
             >
               Search Documents
             </button>
-            <button 
-              onClick={() => navigate("/documents")} 
+            <button
+              onClick={() => navigate("/documents")}
               className="action-button"
             >
               View All Documents
             </button>
           </div>
 
+          {/* herramientas admin */}
           {isAdmin && (
             <div className="action-section">
               <h3>Admin Tools</h3>
-              <button 
-                onClick={() => navigate("/audit")} 
+              <button
+                onClick={() => navigate("/audit")}
                 className="test-button"
               >
                 Audit Logs
@@ -123,18 +118,15 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* Debug token display */}
+        {/* ---------- token debug ---------- */}
         <div className="token-info">
-          <h3>Current ID Token (for debugging):</h3>
-          <textarea 
-            readOnly 
-            value={idToken || 'No token available'} 
-            className="token-display"
+          <h3>Current ID Token (debug):</h3>
+          <textarea
+            readOnly
             rows={3}
+            className="token-display"
+            value={idToken || "No token available"}
           />
-          <p className="token-note">
-            This token is automatically sent with API requests.
-          </p>
         </div>
       </div>
     </div>

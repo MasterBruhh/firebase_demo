@@ -1,8 +1,8 @@
 # backend/routes/document_routes.py
 import os, json, uuid, mimetypes
-from fastapi import APIRouter, UploadFile, File, HTTPException, status
+from fastapi import APIRouter, UploadFile, File, HTTPException, status, Query
 from fastapi.responses import StreamingResponse
-from services.firebase_service import upload_file_to_storage, download_file_from_storage
+from services.firebase_service import upload_file_to_storage, download_file_from_storage, list_files_in_storage
 from services.meilisearch_service import add_documents, search_documents
 from services.gemini_service import extract_metadata
 from models.document_model import DocumentMetadata
@@ -79,3 +79,30 @@ async def list_all():
         if f.endswith(".json")
     ]
     return {"documents": docs}
+
+# ---------- NUEVO: listar todo lo que hay en Firebase Storage ----------
+@router.get("/storage")
+async def list_storage(prefix: str = "documents/"):
+    """
+    Devuelve todos los blobs que existen en Firebase Storage bajo 'documents/'.
+    """
+    return {"files": list_files_in_storage(prefix)}
+
+# ---------- NUEVO: descargar por ruta completa ----------
+@router.get("/download_by_path")
+async def download_by_path(path: str = Query(..., description="Blob path in Storage")):
+    """
+    Descarga cualquier blob dado su `path` completo (documents/…/file.ext).
+    """
+    try:
+        blob_bytes = download_file_from_storage(path)
+    except Exception as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+    filename = Path(path).name
+    media = mimetypes.guess_type(filename)[0] or "application/octet-stream"
+    return StreamingResponse(
+        iter([blob_bytes]),
+        media_type=media,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )

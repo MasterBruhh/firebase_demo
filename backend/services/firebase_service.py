@@ -75,6 +75,26 @@ def download_file_from_storage(blob_path: str) -> bytes:
     blob = bucket.blob(blob_path)
     return blob.download_as_bytes()
 
+def list_files_in_storage(prefix: str = "documents/"):
+    """
+    Devuelve lista de dicts con información básica de cada blob:
+    { 'path', 'filename', 'size', 'updated' }
+    """
+    bucket = get_storage_bucket()
+    files = []
+    for blob in bucket.list_blobs(prefix=prefix):
+        if blob.name.endswith("/"):  # ignora "directorios" vacíos
+            continue
+        files.append(
+            {
+                "path": blob.name,
+                "filename": os.path.basename(blob.name),
+                "size": blob.size,
+                "updated": blob.updated.isoformat(),
+            }
+        )
+    return files
+
 # Pequeña función para probar la autenticación
 async def create_admin_user(email: str, password: str):
     try:

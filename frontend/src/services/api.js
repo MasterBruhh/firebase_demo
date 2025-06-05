@@ -35,8 +35,13 @@ export const documentsAPI = {
     });
   },
   search: (query) => api.get(`/documents/search?query=${encodeURIComponent(query)}`),
-  list:   ()      => api.get("/documents/list"),
-  download: (id)  => api.get(`/documents/download/${id}`),
+  list: () => api.get("/documents/list"),                     // (JSON locales)
+  listStorage: () => api.get("/documents/storage"),           // ← NUEVO
+  download: (id) => api.get(`/documents/download/${id}`, { responseType: "blob" }),
+  downloadByPath: (path) =>
+    api.get(`/documents/download_by_path?path=${encodeURIComponent(path)}`, {
+      responseType: "blob",
+    }),
 };
 
 export const auditAPI = {
