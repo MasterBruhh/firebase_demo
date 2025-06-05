@@ -16,9 +16,12 @@ const api = axios.create({
 // Interceptor para añadir el token de Firebase a cada solicitud si el usuario está logueado
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('idToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    // Only add token from localStorage if no Authorization header is already set
+    if (!config.headers.Authorization) {
+      const token = localStorage.getItem('idToken');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
     return config;
   },
@@ -34,7 +37,8 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       // Token expired or invalid
       localStorage.removeItem('idToken');
-      window.location.href = '/login';
+      // Don't automatically redirect here, let the component handle it
+      console.log('Authentication error detected, token removed from localStorage');
     }
     return Promise.reject(error);
   }

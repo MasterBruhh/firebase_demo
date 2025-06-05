@@ -61,6 +61,7 @@ async def lifespan(app: FastAPI):
                 new_user = get_auth_client().create_user(email=admin_email, password=admin_password)
                 get_auth_client().set_custom_user_claims(new_user.uid, {'admin': True})
                 print(f"Usuario admin '{admin_email}' creado y marcado como admin.")
+                print(f"IMPORTANTE: El usuario admin debe cerrar sesión y volver a iniciar sesión para que los custom claims tengan efecto.")
                 # Registra el evento en la auditoría
                 log_event(new_user.uid, 'ADMIN_USER_CREATED', {'email': admin_email})
             else:
@@ -69,6 +70,7 @@ async def lifespan(app: FastAPI):
                 if not user_claims or 'admin' not in user_claims or not user_claims['admin']:
                     get_auth_client().set_custom_user_claims(user.uid, {'admin': True})
                     print(f"Usuario '{admin_email}' ya existía, asegurado custom claim de admin.")
+                    print(f"IMPORTANTE: El usuario admin debe cerrar sesión y volver a iniciar sesión para que los custom claims tengan efecto.")
                     log_event(user.uid, 'ADMIN_CLAIM_UPDATED', {'email': admin_email})
                 else:
                     print(f"Usuario admin '{admin_email}' ya existe y está configurado.")

@@ -63,6 +63,18 @@ async def api_register_user(user_data: UserRegister):
 #         detail="Please use Firebase client SDK for login and send ID Token to protected routes."
 #     )
 
+@router.get("/debug-token")
+async def debug_token(current_user: Annotated[TokenData, Depends(get_current_user)]):
+    """
+    Debug route to show token information. For development only.
+    """
+    return {
+        "uid": current_user.uid,
+        "email": current_user.email,
+        "is_admin": current_user.is_admin,
+        "message": "Token verification successful"
+    }
+
 # Ruta de prueba para verificar autenticación y rol
 @router.get("/me", response_model=TokenData)
 async def read_users_me(current_user: Annotated[TokenData, Depends(get_current_user)]):

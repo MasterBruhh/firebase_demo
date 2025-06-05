@@ -43,3 +43,13 @@ yarn-error.log*
 *.pid
 *.seed
 *.pid.lock
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Executables
+*.exe
+
+# Service account keys
+backend/firebase-service-account.json

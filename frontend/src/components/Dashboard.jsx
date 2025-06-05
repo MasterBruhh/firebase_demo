@@ -7,25 +7,39 @@ export default function Dashboard() {
   const [userInfo, setUserInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const { currentUser, logout, idToken } = useAuth();
+  const { currentUser, logout, getFreshToken, idToken } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     async function fetchUserInfo() {
-      if (idToken) {
-        try {
-          const response = await authAPI.getCurrentUser(idToken);
+      try {
+        const token = await getFreshToken();
+        if (token) {
+          const response = await authAPI.getCurrentUser(token);
           setUserInfo(response.data);
-        } catch (error) {
-          setError('Failed to fetch user information');
-          console.error('Error fetching user info:', error);
+          setError(''); // Clear any previous errors
         }
+      } catch (error) {
+        setError('Failed to fetch user information: ' + (error.response?.data?.detail || error.message));
+        console.error('Error fetching user info:', error);
+        
+        // If it's a 401 error, the token might be invalid
+        if (error.response?.status === 401) {
+          console.log('Token appears to be invalid, logging out...');
+          await logout();
+          navigate('/login');
+        }
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
 
-    fetchUserInfo();
-  }, [idToken]);
+    if (currentUser) {
+      fetchUserInfo();
+    } else {
+      setLoading(false);
+    }
+  }, [currentUser, getFreshToken, logout, navigate]);
 
   async function handleLogout() {
     try {
@@ -37,13 +51,14 @@ export default function Dashboard() {
   }
 
   async function testAdminRoute() {
-    if (idToken) {
-      try {
-        const response = await authAPI.testAdminRoute(idToken);
+    try {
+      const token = await getFreshToken();
+      if (token) {
+        const response = await authAPI.testAdminRoute(token);
         alert('Admin route response: ' + response.data.message);
-      } catch (error) {
-        alert('Error: ' + (error.response?.data?.detail || 'Access denied'));
       }
+    } catch (error) {
+      alert('Error: ' + (error.response?.data?.detail || 'Access denied'));
     }
   }
 

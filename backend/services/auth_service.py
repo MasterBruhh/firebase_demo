@@ -75,12 +75,15 @@ async def verify_id_token(id_token: str) -> TokenData:
         decoded_token = get_auth_client().verify_id_token(id_token)
         uid = decoded_token["uid"]
         email = decoded_token.get("email", "")
-        claims = decoded_token.get("claims", decoded_token)
-        is_admin = claims.get("admin", False)
+        
+        # Check for admin claim in the token
+        # Custom claims are at the root level of the decoded token
+        is_admin = decoded_token.get("admin", False)
 
         return TokenData(uid=uid, email=email, is_admin=is_admin)
 
     except Exception as e:
+        print(f"Token verification error: {e}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token.",
