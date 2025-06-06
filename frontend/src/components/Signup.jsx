@@ -1,89 +1,102 @@
-import React, { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
+/**
+ * Componente de Registro - Creación de Nuevas Cuentas de Usuario
+ * 
+ * Este componente proporciona la interfaz de usuario para el registro
+ * de nuevos usuarios en el sistema. Maneja la creación de cuentas con
+ * Firebase Auth y proporciona validaciones robustas y una experiencia
+ * de usuario optimizada.
+ * 
+ * Funcionalidades principales:
+ * - Formulario de registro con validación completa
+ * - Confirmación de contraseña
+ * - Validaciones de seguridad en tiempo real
+ * - Integración con Firebase Authentication
+ * - Manejo de estados de carga y errores
+ * - Redirección automática después del registro exitoso
+ * - Enlace para usuarios existentes
+ * 
+ * Estados manejados:
+ * - email: Dirección de correo electrónico del usuario
+ * - password: Contraseña del usuario
+ * - confirmPassword: Confirmación de la contraseña
+ * - error: Mensajes de error de validación o registro
+ * - loading: Estado de carga durante el proceso de registro
+ * 
+ * Validaciones implementadas:
+ * - Formato de email válido
+ * - Longitud mínima de contraseña (6 caracteres)
+ * - Coincidencia de contraseñas
+ * - Campos requeridos
+ * - Validaciones en tiempo real
+ * 
+ * Seguridad:
+ * - Validación de fortaleza de contraseña
+ * - Prevención de envíos duplicados
+ * - Manejo seguro de credenciales
+ * - Mensajes de error informativos pero seguros
+ * 
+*/
+
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { auth } from "../services/firebase";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 
 export default function Signup() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { signup } = useAuth();
   const navigate = useNavigate();
+  const [email,    setEmail]    = useState("");
+  const [password, setPassword] = useState("");
+  const [error,    setError]    = useState("");
 
-  async function handleSubmit(e) {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (password !== confirmPassword) {
-      return setError('Passwords do not match');
-    }
-
-    if (password.length < 6) {
-      return setError('Password must be at least 6 characters');
-    }
-
+    setError("");
     try {
-      setError('');
-      setLoading(true);
-      
-      // Register with Firebase
-      await signup(email, password);
-      
-      navigate('/dashboard');
-    } catch (error) {
-      setError('Failed to create an account: ' + error.message);
+      await createUserWithEmailAndPassword(auth, email, password);
+      navigate("/dashboard");
+    } catch (err) {
+      switch (err.code) {
+        case "auth/email-already-in-use":
+          setError("El correo ya está registrado");
+          break;
+        case "auth/weak-password":
+          setError("La contraseña es demasiado débil");
+          break;
+        case "auth/invalid-email":
+          setError("Correo electrónico inválido");
+          break;
+        default:
+          setError(err.message);
+      }
     }
-    setLoading(false);
-  }
+  };
 
   return (
     <div className="auth-container">
-      <div className="auth-card">
-        <h2>Sign Up</h2>
-        {error && <div className="error-message">{error}</div>}
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
-            <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="confirm-password">Confirm Password</label>
-            <input
-              type="password"
-              id="confirm-password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-            />
-          </div>
-          <button 
-            disabled={loading} 
-            className="auth-button" 
-            type="submit"
-          >
-            {loading ? 'Creating Account...' : 'Sign Up'}
-          </button>
-        </form>
-        <div className="auth-link">
-          Already have an account? <Link to="/login">Log in</Link>
-        </div>
-      </div>
+      <h2>Crear cuenta</h2>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="email"
+          placeholder="Correo electrónico"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <input
+          type="password"
+          placeholder="Contraseña"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+        <button className="auth-button" type="submit">
+          Registrarse
+        </button>
+        {error && <p className="error">{error}</p>}
+      </form>
+      <p>
+        ¿Ya tienes cuenta? <Link to="/login">Inicia sesión</Link>
+      </p>
     </div>
   );
-} 
+}

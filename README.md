@@ -1,37 +1,38 @@
-# Gemini Indexer Demo
+# Demo de Indexador con Gemini
 
-A full-stack application for uploading, indexing, and searching documents using Google Gemini AI, Firebase, and Meilisearch.
+Aplicación *full-stack* para subir, indexar y buscar documentos usando Google Gemini AI, Firebase y Meilisearch.
 
-## Project Structure
+## Estructura del proyecto
 
 ```
 demo_firebase/
-├── backend/                    # Python FastAPI backend
-├── frontend/                   # React + Vite frontend
-├── meilisearch-server/         # Meilisearch binary and data
-├── meilisearch-data/           # Meilisearch data directory (git-ignored)
-├── .gitignore                  # Main git ignore file
-└── README.md                   # This file
+├── backend/                    # Backend Python FastAPI
+├── frontend/                   # Frontend React + Vite
+├── meilisearch-server/         # Binario y datos de Meilisearch
+├── meilisearch-data/           # Directorio de datos de Meilisearch (git-ignored)
+├── .gitignore                  # Archivo principal de exclusiones
+└── README.md                   # Este archivo
 ```
 
-## Features
+## Funcionalidades
 
-- **Authentication**: Firebase Authentication with admin/user roles
-- **Document Upload**: File upload and processing
-- **AI Indexing**: Google Gemini AI for document analysis
-- **Search**: Meilisearch for fast, typo-tolerant search
-- **Audit Logging**: Comprehensive activity logging
+* **Autenticación**: Firebase Auth con roles de administrador/usuario
+* **Subida de documentos**: Carga y procesamiento de archivos
+* **Indexación IA**: Análisis de documentos con Google Gemini AI
+* **Búsqueda**: Meilisearch para búsquedas rápidas y tolerantes a errores
+* **Auditoría**: Registro completo de actividades
 
-## Prerequisites
+## Requisitos previos
 
-- Python 3.11+
-- Node.js 18+
-- Google Cloud Project with Gemini API access
-- Firebase project with Authentication and Firestore
+* Python 3.11 o superior
+* Node.js 18 o superior
+* Proyecto de Google Cloud con acceso a la API de Gemini
+* Proyecto Firebase con Authentication y Firestore habilitados
 
-## Setup Instructions
+## Pasos de configuración
 
-### 1. Backend Setup
+### 1. Backend
+
 ```bash
 cd backend
 python -m venv venv
@@ -39,29 +40,45 @@ venv\Scripts\Activate.ps1  # Windows
 pip install -r requirements.txt
 ```
 
-### 2. Frontend Setup
+### 2. Frontend
+
 ```bash
 cd frontend
 npm install
 ```
 
-### 3. Environment Configuration
-Create a `.env` file in the `backend/` directory with your configuration.
+### 3. Variables de entorno
 
-### 4. Start Services
-1. Start Meilisearch server
-2. Start backend: `uvicorn main:app --reload --host 0.0.0.0 --port 8000`
-3. Start frontend: `npm run dev`
+Crea un archivo `.env` dentro de `backend/` con tu configuración (claves de API, bucket de Storage, etc.).
 
-## Default Admin User
-- Email: admin@example.com
-- Password: adminpassword
+### 4. Arranque de servicios
 
-## Tech Stack
+1. Inicia el servidor de Meilisearch.
+2. Levanta el backend:
 
-- **Backend**: FastAPI, Python
-- **Frontend**: React, Vite
-- **Database**: Firebase Firestore
-- **Authentication**: Firebase Auth
-- **Search**: Meilisearch
-- **AI**: Google Gemini API
+   ```bash
+   uvicorn main:app --reload --host 0.0.0.0 --port 8000
+   ```
+3. Inicia el frontend:
+
+   ```bash
+   npm run dev
+   ```
+
+## Usuario administrador por defecto
+
+* **Correo**: [admin@example.com](mailto:admin@example.com)
+* **Contraseña**: adminpassword
+
+## Tecnologías empleadas
+
+| Capa              | Tecnología         |
+| ----------------- | ------------------ |
+| **Backend**       | FastAPI, Python    |
+| **Frontend**      | React, Vite        |
+| **Base de datos** | Firebase Firestore |
+| **Autenticación** | Firebase Auth      |
+| **Búsqueda**      | Meilisearch        |
+| **IA**            | Google Gemini API  |
+
+---

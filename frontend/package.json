@@ -1,13 +1,45 @@
 {
-  "name": "frontend",
+  "name": "firebase-demo-frontend",
+  "displayName": "Firebase Demo - Frontend",
+  "description": "Frontend moderno para el sistema de gestión de documentos con Firebase, Google Gemini AI y autenticación avanzada",
+  "version": "1.0.0",
   "private": true,
-  "version": "0.0.0",
   "type": "module",
+  "author": {
+    "name": "Firebase Demo Project",
+    "email": "demo@firebase-project.com"
+  },
+  "license": "MIT",
+  "homepage": "https://firebase-demo.example.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tu-usuario/firebase-demo.git"
+  },
+  "keywords": [
+    "react",
+    "firebase",
+    "vite",
+    "authentication",
+    "document-management",
+    "gemini-ai",
+    "modern-ui"
+  ],
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host",
     "build": "vite build",
+    "preview": "vite preview --host",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "lint:fix": "eslint . --ext js,jsx --fix",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist node_modules/.vite",
+    "analyze": "npm run build && npx vite-bundle-analyzer dist/stats.html",
+    "start": "npm run dev",
+    "serve": "npm run preview",
+    "test": "echo \"Tests pendientes de implementar\" && exit 0"
   },
   "dependencies": {
     "axios": "^1.9.0",
@@ -26,5 +58,35 @@
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^16.0.0",
     "vite": "^6.3.5"
-  }
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "vite": {
+    "optimizeDeps": {
+      "include": [
+        "react",
+        "react-dom",
+        "react-router-dom",
+        "axios",
+        "firebase"
+      ]
+    }
+  },
+  "packageManager": "npm@10.0.0"
 }

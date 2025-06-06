@@ -1,4 +1,43 @@
-// frontend/src/components/Dashboard.jsx
+/**
+ * Componente Dashboard - Panel Principal de Control del Usuario
+ * 
+ * Este componente sirve como el punto central de navegación y control
+ * de la aplicación después del login. Proporciona acceso a todas las
+ * funcionalidades del sistema según los permisos del usuario.
+ * 
+ * Funcionalidades principales:
+ * - Panel de bienvenida personalizado
+ * - Navegación a funcionalidades principales
+ * - Información del usuario actual
+ * - Controles administrativos (solo para admins)
+ * - Gestión de documentos
+ * - Herramientas de auditoría
+ * - Sistema de logout seguro
+ * 
+ * Estados manejados:
+ * - userInfo: Información detallada del usuario
+ * - loading: Estado de carga durante obtención de datos
+ * - error: Mensajes de error de la API
+ * - stats: Estadísticas del sistema (admin)
+ * 
+ * Permisos y roles:
+ * - Usuario regular: Búsqueda y visualización de documentos
+ * - Administrador: Subida de documentos, auditoría, gestión completa
+ * 
+ * Integración:
+ * - Firebase Authentication para autenticación
+ * - API backend para obtener información del usuario
+ * - React Router para navegación
+ * - Contexto de autenticación
+ * 
+ * Seguridad:
+ * - Verificación de permisos en tiempo real
+ * - Separación de funcionalidades por rol
+ * - Manejo seguro de tokens
+ * - Logout seguro con limpieza de estado
+ * 
+*/
+
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
@@ -11,7 +50,7 @@ export default function Dashboard() {
   const [error,    setError]    = useState("");
   const navigate = useNavigate();
 
-  /* ---------- carga información del usuario ---------- */
+  /* Obtener información del usuario */
   useEffect(() => {
     if (!currentUser) return;
 
@@ -28,107 +67,93 @@ export default function Dashboard() {
     })();
   }, [currentUser]);
 
-  /* ---------- logout ---------- */
+  /* Cerrar sesión */
   const handleLogout = async () => {
     await logout();
     navigate("/login");
   };
 
-  /* ---------- prueba ruta admin ---------- */
+  /* Probar ruta de administrador */
   const testAdminRoute = async () => {
     try {
       const { data } = await authAPI.testAdminRoute();
-      alert(`Admin test successful: ${data.message}`);
+      alert(`✔️ ${data.message}`);
     } catch (err) {
-      alert(`Error: ${err.response?.data?.detail || err.message}`);
+      const status = err.response?.status;
+      if (status === 403) {
+        alert("⚠️ Necesitas permisos de administrador para usar esta función.");
+      } else if (status === 401) {
+        alert("⚠️ Sesión expirada. Vuelve a iniciar sesión.");
+      } else {
+        alert(`Error inesperado: ${err.response?.data?.detail || err.message}`);
+      }
     }
   };
 
-  if (loading) return <div className="loading">Loading…</div>;
+  if (loading) return <div className="loading">Cargando…</div>;
 
   return (
     <div className="dashboard">
       <header className="dashboard-header">
-        <h1>Gemini Indexer Demo</h1>
+        <h1>Demo Indexador Gemini</h1>
         <button onClick={handleLogout} className="logout-button">
-          Log Out
+          Cerrar sesión
         </button>
       </header>
 
       <div className="dashboard-content">
-        {/* ---------- info usuario ---------- */}
+        {/* Información de usuario */}
         <div className="user-info">
-          <h2>Welcome, {currentUser.email}</h2>
+          <h2>Bienvenido, {currentUser.email}</h2>
           <p><strong>UID:</strong> {currentUser.uid}</p>
-          {userInfo && (
-            <p><strong>Role:</strong> {isAdmin ? "Admin" : "User"}</p>
-          )}
+          <p><strong>Rol:</strong> {isAdmin ? "Admin" : "Usuario"}</p>
           {error && <div className="error-message">{error}</div>}
         </div>
 
-        {/* ---------- acciones ---------- */}
+        {/* Acciones */}
         <div className="dashboard-actions">
-          {/* bloque auth test (visibles a todos) */}
+          {/* Sección de pruebas */}
           <div className="action-section">
-            <h3>Authentication Test</h3>
+            <h3>Prueba de autenticación</h3>
             <button onClick={testAdminRoute} className="test-button">
-              Test Admin Route
+              Probar ruta de administrador
             </button>
           </div>
 
-          {/* gestión de documentos */}
+          {/* Gestión de documentos */}
           <div className="action-section">
-            <h3>Document Management</h3>
-
-            {/* Upload solo admins */}
+            <h3>Gestión de documentos</h3>
             {isAdmin && (
-              <button
-                onClick={() => navigate("/upload")}
-                className="action-button"
-              >
-                Upload Document
+              <button onClick={() => navigate("/upload")} className="action-button">
+                Subir documento
               </button>
             )}
-
-            <button
-              onClick={() => navigate("/search")}
-              className="action-button"
-            >
-              Search Documents
+            <button onClick={() => navigate("/search")}   className="action-button">
+              Buscar documentos
             </button>
-            <button
-              onClick={() => navigate("/documents")}
-              className="action-button"
-            >
-              View All Documents
+            <button onClick={() => navigate("/documents")} className="action-button">
+              Ver documentos
             </button>
           </div>
 
-          {/* herramientas admin */}
+          {/* Herramientas de administrador */}
           {isAdmin && (
             <div className="action-section">
-              <h3>Admin Tools</h3>
-              <button
-                onClick={() => navigate("/audit")}
-                className="test-button"
-              >
-                Audit Logs
+              <h3>Herramientas de administrador</h3>
+              <button onClick={() => navigate("/audit")} className="test-button">
+                Registros de auditoría
               </button>
             </div>
           )}
         </div>
 
-        {/* ---------- token debug ---------- */}
+        {/* Token debug */}
         <div className="token-info">
-          <h3>Current ID Token (debug):</h3>
-          <textarea
-            readOnly
-            rows={3}
-            className="token-display"
-            value={idToken || "No token available"}
-          />
+          <h3>Token ID (debug)</h3>
+          <textarea readOnly rows={3} value={idToken || "Sin token"} />
         </div>
       </div>
     </div>
   );
 }
+

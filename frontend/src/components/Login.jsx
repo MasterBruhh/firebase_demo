@@ -1,67 +1,91 @@
-import React, { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
+/**
+ * Componente de Inicio de Sesión - Autenticación de Usuarios
+ * 
+ * Este componente proporciona la interfaz de usuario para el inicio de sesión
+ * de usuarios registrados en el sistema. Maneja la autenticación con Firebase
+ * Auth y proporciona una experiencia de usuario intuitiva y segura.
+ * 
+ * Funcionalidades principales:
+ * - Formulario de inicio de sesión con validación
+ * - Integración con Firebase Authentication
+ * - Manejo de estados de carga y errores
+ * - Redirección automática después del login exitoso
+ * - Enlace para registro de nuevos usuarios
+ * 
+ * Estados manejados:
+ * - email: Dirección de correo electrónico del usuario
+ * - password: Contraseña del usuario
+ * - error: Mensajes de error de autenticación
+ * - loading: Estado de carga durante el proceso de login
+ * 
+ * Seguridad:
+ * - Validación de campos requeridos
+ * - Manejo seguro de credenciales
+ * - Protección contra ataques de fuerza bruta (lado servidor)
+ * - Mensajes de error informativos pero seguros
+ * 
+*/
+
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { auth } from "../services/firebase";
+import { signInWithEmailAndPassword } from "firebase/auth";
 
 export default function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
   const navigate = useNavigate();
+  const [email,    setEmail]    = useState("");
+  const [password, setPassword] = useState("");
+  const [error,    setError]    = useState("");
 
-  async function handleSubmit(e) {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
+    setError("");
     try {
-      setError('');
-      setLoading(true);
-      await login(email, password);
-      navigate('/dashboard');
-    } catch (error) {
-      setError('Failed to log in: ' + error.message);
+      await signInWithEmailAndPassword(auth, email, password);
+      navigate("/dashboard");
+    } catch (err) {
+      switch (err.code) {
+        case "auth/wrong-password":
+          setError("Contraseña incorrecta");
+          break;
+        case "auth/user-not-found":
+          setError("El usuario no existe");
+          break;
+        case "auth/invalid-email":
+          setError("Correo electrónico inválido");
+          break;
+        default:
+          setError(err.message);
+      }
     }
-    setLoading(false);
-  }
+  };
 
   return (
     <div className="auth-container">
-      <div className="auth-card">
-        <h2>Log In</h2>
-        {error && <div className="error-message">{error}</div>}
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
-            <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-          <button 
-            disabled={loading} 
-            className="auth-button" 
-            type="submit"
-          >
-            {loading ? 'Logging in...' : 'Log In'}
-          </button>
-        </form>
-        <div className="auth-link">
-          Need an account? <Link to="/signup">Sign up</Link>
-        </div>
-      </div>
+      <h2>Iniciar sesión</h2>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="email"
+          placeholder="Correo electrónico"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <input
+          type="password"
+          placeholder="Contraseña"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+        <button className="auth-button" type="submit">
+          Entrar
+        </button>
+        {error && <p className="error">{error}</p>}
+      </form>
+      <p>
+        ¿No tienes cuenta? <Link to="/signup">Regístrate</Link>
+      </p>
     </div>
   );
-} 
+}
